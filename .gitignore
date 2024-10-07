@@ -962,3 +962,8 @@ coverage*[.json, .xml, .info]
 **/desktop.ini 
 /.vscode/
 /build_win/*
+/publish_win/*
+/release_win/*
+/build_linux/*
+/publish_linux/*
+/release_linux/*
