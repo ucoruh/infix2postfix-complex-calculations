@@ -17,6 +17,10 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
+    # Install RAR tool (Linux)
+    - name: Install RAR (Linux)
+      run: sudo apt-get update && sudo apt-get install rar -y
+
     # CMake ile proje yapılandırması (Linux)
     - name: Configure project (Linux)
       run: cmake -S . -B build -DCMAKE_INSTALL_PREFIX=publish_linux
@@ -31,6 +35,10 @@ jobs:
     # Çıktı dosyalarının kontrolü (Linux)
     - name: List output directory (Linux)
       run: ls -la ./publish_linux/bin
+
+    # Binaries dosyasını .rar formatında sıkıştırma (Linux)
+    - name: Compress binaries to .rar (Linux)
+      run: rar a InfixToPostfixCalculator_linux.rar ./publish_linux/bin/InfixToPostfixCalculator
 
     # Release oluşturma (sadece Linux'da release oluştur)
     - name: Create GitHub Release
@@ -51,13 +59,13 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.INFIX_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./publish_linux/bin/InfixToPostfixCalculator
-        asset_name: InfixToPostfixCalculator_linux
+        asset_path: ./InfixToPostfixCalculator_linux.rar
+        asset_name: InfixToPostfixCalculator_linux.rar
         asset_content_type: application/octet-stream
 
-    # Release'in upload_url'ini Windows job'ına iletmek için bir output belirle
-    outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    # Release'in upload_url'ini Windows job'ına iletmek için GITHUB_OUTPUT kullan
+    - name: Set output for upload_url
+      run: echo "upload_url=${{ steps.create_release.outputs.upload_url }}" >> $GITHUB_OUTPUT
 
   # Then, build and upload for Windows, but only after the Linux job completes
   build-windows:
@@ -67,6 +75,10 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
+
+    # Install RAR tool (Windows)
+    - name: Install RAR (Windows)
+      run: choco install winrar
 
     # CMake ile proje yapılandırması (Windows)
     - name: Configure project (Windows)
@@ -83,14 +95,17 @@ jobs:
     - name: List output directory (Windows)
       run: dir .\publish_windows\bin
 
+    # Binaries dosyasını .rar formatında sıkıştırma (Windows)
+    - name: Compress binaries to .rar (Windows)
+      run: rar a InfixToPostfixCalculator_windows.rar .\publish_windows\bin\InfixToPostfixCalculator.exe
+
     # Windows için release dosyasını yükleme (varolan release'a ekleme yap)
     - name: Upload Release Asset (Windows)
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.INFIX_TOKEN }}
       with:
-        # Linux job'unda oluşturulan release'ın upload_url'ini yeniden kullan
         upload_url: ${{ needs.build-linux.outputs.upload_url }}
-        asset_path: ./publish_windows/bin/InfixToPostfixCalculator.exe
-        asset_name: InfixToPostfixCalculator_windows.exe
+        asset_path: ./InfixToPostfixCalculator_windows.rar
+        asset_name: InfixToPostfixCalculator_windows.rar
         asset_content_type: application/octet-stream
