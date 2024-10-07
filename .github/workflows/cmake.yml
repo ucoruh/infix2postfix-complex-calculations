@@ -9,12 +9,9 @@ on:
       - main
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
+  # First, build and release on Linux
+  build-linux:
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout repository
@@ -22,43 +19,20 @@ jobs:
 
     # CMake ile proje yapılandırması (Linux)
     - name: Configure project (Linux)
-      if: matrix.os == 'ubuntu-latest'
       run: cmake -S . -B build -DCMAKE_INSTALL_PREFIX=publish_linux
-
-    # CMake ile proje yapılandırması (Windows)
-    - name: Configure project (Windows)
-      if: matrix.os == 'windows-latest'
-      run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_INSTALL_PREFIX=publish_windows
 
     # Debug yapılandırma ve kurulum (Linux)
     - name: Build project (Debug, Linux)
-      if: matrix.os == 'ubuntu-latest'
       run: cmake --build build --config Debug
 
     - name: Install Debug (Linux)
-      if: matrix.os == 'ubuntu-latest'
       run: cmake --install build --config Debug --prefix publish_linux
-
-    # Debug yapılandırma ve kurulum (Windows)
-    - name: Build project (Debug, Windows)
-      if: matrix.os == 'windows-latest'
-      run: cmake --build build --config Debug
-
-    - name: Install Debug (Windows)
-      if: matrix.os == 'windows-latest'
-      run: cmake --install build --config Debug --prefix publish_windows
 
     # Çıktı dosyalarının kontrolü (Linux)
     - name: List output directory (Linux)
-      if: matrix.os == 'ubuntu-latest'
       run: ls -la ./publish_linux/bin
 
-    # Çıktı dosyalarının kontrolü (Windows)
-    - name: List output directory (Windows)
-      if: matrix.os == 'windows-latest'
-      run: dir .\publish_windows\bin
-
-    # Release oluşturma ve yükleme
+    # Release oluşturma (sadece Linux'da release oluştur)
     - name: Create GitHub Release
       id: create_release
       uses: actions/create-release@v1
@@ -72,7 +46,6 @@ jobs:
 
     # Linux için release dosyasını yükleme
     - name: Upload Release Asset (Linux)
-      if: matrix.os == 'ubuntu-latest'
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.INFIX_TOKEN }}
@@ -82,14 +55,38 @@ jobs:
         asset_name: InfixToPostfixCalculator_linux
         asset_content_type: application/octet-stream
 
-    # Windows için release dosyasını yükleme
+  # Then, build and upload for Windows, but only after the Linux job completes
+  build-windows:
+    runs-on: windows-latest
+    needs: build-linux # This ensures the Windows job waits for the Linux job to finish
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    # CMake ile proje yapılandırması (Windows)
+    - name: Configure project (Windows)
+      run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_INSTALL_PREFIX=publish_windows
+
+    # Debug yapılandırma ve kurulum (Windows)
+    - name: Build project (Debug, Windows)
+      run: cmake --build build --config Debug
+
+    - name: Install Debug (Windows)
+      run: cmake --install build --config Debug --prefix publish_windows
+
+    # Çıktı dosyalarının kontrolü (Windows)
+    - name: List output directory (Windows)
+      run: dir .\publish_windows\bin
+
+    # Windows için release dosyasını yükleme (varolan release'a ekleme yap)
     - name: Upload Release Asset (Windows)
-      if: matrix.os == 'windows-latest'
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.INFIX_TOKEN }}
       with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        # Linux job'unda oluşturulan release'ın upload_url'ini yeniden kullan
+        upload_url: ${{ needs.build-linux.outputs['create_release.upload_url'] }}
         asset_path: ./publish_windows/bin/InfixToPostfixCalculator.exe
         asset_name: InfixToPostfixCalculator_windows.exe
         asset_content_type: application/octet-stream
