@@ -17,10 +17,6 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    # Install zip tool (Linux)
-    - name: Install zip (Linux)
-      run: sudo apt-get update && sudo apt-get install zip -y
-
     # CMake ile proje yapılandırması (Linux)
     - name: Configure project (Linux)
       run: cmake -S . -B build -DCMAKE_INSTALL_PREFIX=publish_linux
@@ -36,9 +32,9 @@ jobs:
     - name: List output directory (Linux)
       run: ls -la ./publish_linux/bin
 
-    # Binaries dosyasını .zip formatında sıkıştırma (Linux)
-    - name: Compress binaries to .zip (Linux)
-      run: zip InfixToPostfixCalculator_linux.zip ./publish_linux/bin/InfixToPostfixCalculator
+    # Linux için dosyaları zip ile sıkıştırma
+    - name: Compress output to zip (Linux)
+      run: zip -r InfixToPostfixCalculator_linux.zip ./publish_linux/bin
 
     # Release oluşturma (sadece Linux'da release oluştur)
     - name: Create GitHub Release
@@ -52,7 +48,7 @@ jobs:
         draft: false
         prerelease: false
 
-    # Linux için release dosyasını yükleme
+    # Linux için release dosyasını yükleme (zip dosyası)
     - name: Upload Release Asset (Linux)
       uses: actions/upload-release-asset@v1
       env:
@@ -61,24 +57,20 @@ jobs:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ./InfixToPostfixCalculator_linux.zip
         asset_name: InfixToPostfixCalculator_linux.zip
-        asset_content_type: application/octet-stream
+        asset_content_type: application/zip
 
-    # Release'in upload_url'ini Windows job'ına iletmek için eski usul set-output kullanımı
-    - name: Set output for upload_url
-      run: echo "::set-output name=upload_url::${{ steps.create_release.outputs.upload_url }}"
+    # Release'in upload_url'ini Windows job'ına iletmek için bir output belirle
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
 
   # Then, build and upload for Windows, but only after the Linux job completes
   build-windows:
     runs-on: windows-latest
-    needs: build-linux
+    needs: build-linux # This ensures the Windows job waits for the Linux job to finish
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
-
-    # Install zip tool (Windows)
-    - name: Install zip (Windows)
-      run: choco install zip
 
     # CMake ile proje yapılandırması (Windows)
     - name: Configure project (Windows)
@@ -95,9 +87,9 @@ jobs:
     - name: List output directory (Windows)
       run: dir .\publish_windows\bin
 
-    # Binaries dosyasını .zip formatında sıkıştırma (Windows)
-    - name: Compress binaries to .zip (Windows)
-      run: zip InfixToPostfixCalculator_windows.zip .\publish_windows\bin\InfixToPostfixCalculator.exe
+    # Windows için dosyaları zip ile sıkıştırma
+    - name: Compress output to zip (Windows)
+      run: Compress-Archive -Path .\publish_windows\bin\InfixToPostfixCalculator.exe -DestinationPath InfixToPostfixCalculator_windows.zip
 
     # Windows için release dosyasını yükleme (varolan release'a ekleme yap)
     - name: Upload Release Asset (Windows)
@@ -105,8 +97,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.INFIX_TOKEN }}
       with:
-        # Linux job'undan alınan upload_url'i kullan
+        # Linux job'unda oluşturulan release'ın upload_url'ini yeniden kullan
         upload_url: ${{ needs.build-linux.outputs.upload_url }}
         asset_path: ./InfixToPostfixCalculator_windows.zip
         asset_name: InfixToPostfixCalculator_windows.zip
-        asset_content_type: application/octet-stream
+        asset_content_type: application/zip
