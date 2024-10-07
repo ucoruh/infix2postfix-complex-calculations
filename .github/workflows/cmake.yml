@@ -58,24 +58,9 @@ jobs:
       if: matrix.os == 'windows-latest'
       run: dir .\publish_windows\bin
 
-    # GitHub Release oluşturma öncesi, var olup olmadığını kontrol et
-    - name: Check if release exists
-      id: check_release
-      uses: actions/github-script@v3
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        script: |
-          const releases = await github.repos.listReleases({
-            owner: context.repo.owner,
-            repo: context.repo.repo
-          });
-          return releases.data.find(release => release.tag_name === `v1.0.${{ github.run_number }}`) ? 'true' : 'false';
-
-    # Release oluşturma (Eğer önceden yoksa)
+    # Release oluşturma ve yükleme
     - name: Create GitHub Release
       id: create_release
-      if: steps.check_release.outputs.result == 'false'
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.INFIX_TOKEN }}
@@ -89,6 +74,8 @@ jobs:
     - name: Upload Release Asset (Linux)
       if: matrix.os == 'ubuntu-latest'
       uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.INFIX_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ./publish_linux/bin/InfixToPostfixCalculator
@@ -99,6 +86,8 @@ jobs:
     - name: Upload Release Asset (Windows)
       if: matrix.os == 'windows-latest'
       uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.INFIX_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ./publish_windows/bin/InfixToPostfixCalculator.exe
