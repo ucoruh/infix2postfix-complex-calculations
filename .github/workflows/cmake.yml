@@ -17,9 +17,9 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    # Install RAR tool (Linux)
-    - name: Install RAR (Linux)
-      run: sudo apt-get update && sudo apt-get install rar -y
+    # Install zip tool (Linux)
+    - name: Install zip (Linux)
+      run: sudo apt-get update && sudo apt-get install zip -y
 
     # CMake ile proje yapılandırması (Linux)
     - name: Configure project (Linux)
@@ -36,9 +36,9 @@ jobs:
     - name: List output directory (Linux)
       run: ls -la ./publish_linux/bin
 
-    # Binaries dosyasını .rar formatında sıkıştırma (Linux)
-    - name: Compress binaries to .rar (Linux)
-      run: rar a InfixToPostfixCalculator_linux.rar ./publish_linux/bin/InfixToPostfixCalculator
+    # Binaries dosyasını .zip formatında sıkıştırma (Linux)
+    - name: Compress binaries to .zip (Linux)
+      run: zip InfixToPostfixCalculator_linux.zip ./publish_linux/bin/InfixToPostfixCalculator
 
     # Release oluşturma (sadece Linux'da release oluştur)
     - name: Create GitHub Release
@@ -59,8 +59,8 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.INFIX_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./InfixToPostfixCalculator_linux.rar
-        asset_name: InfixToPostfixCalculator_linux.rar
+        asset_path: ./InfixToPostfixCalculator_linux.zip
+        asset_name: InfixToPostfixCalculator_linux.zip
         asset_content_type: application/octet-stream
 
     # Release'in upload_url'ini Windows job'ına iletmek için output ayarla
@@ -77,9 +77,9 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    # Install RAR tool (Windows)
-    - name: Install RAR (Windows)
-      run: choco install winrar
+    # Install zip tool (Windows)
+    - name: Install zip (Windows)
+      run: choco install zip
 
     # CMake ile proje yapılandırması (Windows)
     - name: Configure project (Windows)
@@ -96,9 +96,9 @@ jobs:
     - name: List output directory (Windows)
       run: dir .\publish_windows\bin
 
-    # Binaries dosyasını .rar formatında sıkıştırma (Windows)
-    - name: Compress binaries to .rar (Windows)
-      run: "C:\\Program Files\\WinRAR\\WinRAR.exe" a InfixToPostfixCalculator_windows.rar .\publish_windows\bin\InfixToPostfixCalculator.exe
+    # Binaries dosyasını .zip formatında sıkıştırma (Windows)
+    - name: Compress binaries to .zip (Windows)
+      run: zip InfixToPostfixCalculator_windows.zip .\publish_windows\bin\InfixToPostfixCalculator.exe
 
     # Windows için release dosyasını yükleme (varolan release'a ekleme yap)
     - name: Upload Release Asset (Windows)
@@ -108,6 +108,6 @@ jobs:
       with:
         # Linux job'undan alınan upload_url'i kullan
         upload_url: ${{ needs.build-linux.outputs['set_output.upload_url'] }}
-        asset_path: ./InfixToPostfixCalculator_windows.rar
-        asset_name: InfixToPostfixCalculator_windows.rar
+        asset_path: ./InfixToPostfixCalculator_windows.zip
+        asset_name: InfixToPostfixCalculator_windows.zip
         asset_content_type: application/octet-stream
