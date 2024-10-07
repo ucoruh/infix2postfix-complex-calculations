@@ -23,13 +23,7 @@ else()
     target_compile_options(InfixToPostfixCalculator PRIVATE -Wall -Wextra -pedantic)
 endif()
 
-# Platforma göre kurulum hedefi (install)
-if(WIN32)
-    set(INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/publish_windows/bin)
-else()
-    set(INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/publish_linux/bin)
-endif()
-
+# Kurulum hedefi
 install(TARGETS InfixToPostfixCalculator
-    RUNTIME DESTINATION ${INSTALL_DIR}
+    RUNTIME DESTINATION bin  # Kurulum dizini prefix'e göre otomatik olacak
 )
