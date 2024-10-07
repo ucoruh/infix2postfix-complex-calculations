@@ -97,7 +97,7 @@ jobs:
 
     # Binaries dosyasını .rar formatında sıkıştırma (Windows)
     - name: Compress binaries to .rar (Windows)
-      run: rar a InfixToPostfixCalculator_windows.rar .\publish_windows\bin\InfixToPostfixCalculator.exe
+      run: "C:\\Program Files\\WinRAR\\WinRAR.exe" a InfixToPostfixCalculator_windows.rar .\publish_windows\bin\InfixToPostfixCalculator.exe
 
     # Windows için release dosyasını yükleme (varolan release'a ekleme yap)
     - name: Upload Release Asset (Windows)
