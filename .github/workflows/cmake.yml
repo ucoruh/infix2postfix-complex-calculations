@@ -107,7 +107,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.INFIX_TOKEN }}
       with:
         # Linux job'undan alınan upload_url'i kullan
-        upload_url: ${{ needs.build-linux.outputs['set_output.upload_url'] }}
+        upload_url: ${{ needs.build-linux.outputs.upload_url }}
         asset_path: ./InfixToPostfixCalculator_windows.zip
         asset_name: InfixToPostfixCalculator_windows.zip
         asset_content_type: application/octet-stream
