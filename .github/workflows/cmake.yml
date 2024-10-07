@@ -63,15 +63,14 @@ jobs:
         asset_name: InfixToPostfixCalculator_linux.zip
         asset_content_type: application/octet-stream
 
-    # Release'in upload_url'ini Windows job'ına iletmek için output ayarla
+    # Release'in upload_url'ini Windows job'ına iletmek için environment file'a yaz
     - name: Set output for upload_url
-      id: set_output
-      run: echo "upload_url=${{ steps.create_release.outputs.upload_url }}" >> $GITHUB_OUTPUT
+      run: echo "UPLOAD_URL=${{ steps.create_release.outputs.upload_url }}" >> $GITHUB_ENV
 
   # Then, build and upload for Windows, but only after the Linux job completes
   build-windows:
     runs-on: windows-latest
-    needs: build-linux # This ensures the Windows job waits for the Linux job to finish
+    needs: build-linux
 
     steps:
     - name: Checkout repository
@@ -107,7 +106,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.INFIX_TOKEN }}
       with:
         # Linux job'undan alınan upload_url'i kullan
-        upload_url: ${{ needs.build-linux.outputs.upload_url }}
+        upload_url: ${{ env.UPLOAD_URL }}
         asset_path: ./InfixToPostfixCalculator_windows.zip
         asset_name: InfixToPostfixCalculator_windows.zip
         asset_content_type: application/octet-stream
