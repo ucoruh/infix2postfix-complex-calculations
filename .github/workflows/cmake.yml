@@ -1,3 +1,4 @@
+# GitHub Actions Workflow
 name: CMake Build
 
 on:
@@ -63,7 +64,7 @@ jobs:
       id: create_release
       uses: actions/create-release@v1
       env:
-        GITHUB_TOKEN: ${{ secrets.INFIX_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.INFIX_TOKEN }}  # Correct token for creating release
       with:
         tag_name: v1.0.${{ github.run_number }}
         release_name: "Release v1.0.${{ github.run_number }}"
@@ -74,6 +75,8 @@ jobs:
     - name: Upload Release Asset (Linux)
       if: matrix.os == 'ubuntu-latest'
       uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.INFIX_TOKEN }}  # Correct token for uploading asset
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ./publish_linux/bin/InfixToPostfixCalculator
@@ -84,6 +87,8 @@ jobs:
     - name: Upload Release Asset (Windows)
       if: matrix.os == 'windows-latest'
       uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.INFIX_TOKEN }}  # Correct token for uploading asset
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ./publish_windows/bin/InfixToPostfixCalculator.exe
