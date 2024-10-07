@@ -1,16 +1,15 @@
-name: CMake
+name: CMake Build
 
 on:
   push:
-    branches: 
+    branches:
       - main
   pull_request:
-    branches: 
+    branches:
       - main
 
 jobs:
   build:
-
     runs-on: ${{ matrix.os }}
 
     strategy:
@@ -21,18 +20,15 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: Set up CMake
-      uses: actions/setup-cmake@v3
-      with:
-        cmake-version: '3.18.4'
-
+    # CMake'yi doğrudan kullanarak yapılandırma ve derleme işlemleri
     - name: Configure project with CMake
       run: cmake -S . -B build
 
     - name: Build project
       run: cmake --build build
 
-    - name: Run tests
+    # Testleri çalıştırıyoruz
+    - name: Run tests (Linux)
       run: ./build/InfixToPostfixCalculator
       if: matrix.os == 'ubuntu-latest'
 
@@ -40,22 +36,21 @@ jobs:
       run: build\Debug\InfixToPostfixCalculator.exe
       if: matrix.os == 'windows-latest'
 
-    # Executable dosyayı paketleme (Linux)
-    - name: Package executable (Linux)
+    # Debug ve Release versiyonlarını kuruyoruz
+    - name: Install Debug and Release (Linux)
+      run: cmake --install build --config Debug --prefix publish_linux
       if: matrix.os == 'ubuntu-latest'
-      run: zip InfixToPostfixCalculator_linux.zip ./build/InfixToPostfixCalculator
 
-    # Executable dosyayı paketleme (Windows)
-    - name: Package executable (Windows)
+    - name: Install Debug and Release (Windows)
+      run: cmake --install build --config Debug --prefix publish_windows
       if: matrix.os == 'windows-latest'
-      run: powershell.exe Compress-Archive -Path build\Debug\InfixToPostfixCalculator.exe -DestinationPath InfixToPostfixCalculator_windows.zip
 
-    # Release oluşturma
+    # GitHub release oluşturma işlemi için INFIX_TOKEN kullanarak yükleme
     - name: Create GitHub Release
       id: create_release
       uses: actions/create-release@v1
       env:
-        GITHUB_TOKEN: ${{ secrets.INFIX_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.INFIX_TOKEN }}  # INFIX_TOKEN burada kullanılıyor
       with:
         tag_name: v1.0.${{ github.run_number }}
         release_name: "Release v1.0.${{ github.run_number }}"
@@ -66,22 +61,18 @@ jobs:
     - name: Upload Release Asset (Linux)
       if: matrix.os == 'ubuntu-latest'
       uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.INFIX_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./InfixToPostfixCalculator_linux.zip
-        asset_name: InfixToPostfixCalculator_linux.zip
-        asset_content_type: application/zip
+        asset_path: ./publish_linux/bin/InfixToPostfixCalculator
+        asset_name: InfixToPostfixCalculator_linux
+        asset_content_type: application/octet-stream
 
     # Windows için release dosyasını yükleme
     - name: Upload Release Asset (Windows)
       if: matrix.os == 'windows-latest'
       uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.INFIX_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./InfixToPostfixCalculator_windows.zip
-        asset_name: InfixToPostfixCalculator_windows.zip
-        asset_content_type: application/zip
+        asset_path: ./publish_windows/bin/InfixToPostfixCalculator.exe
+        asset_name: InfixToPostfixCalculator_windows.exe
+        asset_content_type: application/octet-stream
