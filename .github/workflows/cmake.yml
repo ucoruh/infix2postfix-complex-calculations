@@ -65,8 +65,8 @@ jobs:
 
     # Release'in upload_url'ini Windows job'ına iletmek için output ayarla
     - name: Set output for upload_url
-      run: echo "upload_url=${{ steps.create_release.outputs.upload_url }}" >> $GITHUB_OUTPUT
       id: set_output
+      run: echo "upload_url=${{ steps.create_release.outputs.upload_url }}" >> $GITHUB_OUTPUT
 
   # Then, build and upload for Windows, but only after the Linux job completes
   build-windows:
@@ -107,7 +107,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.INFIX_TOKEN }}
       with:
         # Linux job'undan alınan upload_url'i kullan
-        upload_url: ${{ needs.build-linux.outputs.set_output.upload_url }}
+        upload_url: ${{ needs.build-linux.outputs['set_output.upload_url'] }}
         asset_path: ./InfixToPostfixCalculator_windows.rar
         asset_name: InfixToPostfixCalculator_windows.rar
         asset_content_type: application/octet-stream
