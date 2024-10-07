@@ -20,37 +20,48 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    # CMake'yi doğrudan kullanarak yapılandırma ve derleme işlemleri
-    - name: Configure project with CMake
-      run: cmake -S . -B build
-
-    - name: Build project
-      run: cmake --build build
-
-    # Testleri çalıştırıyoruz
-    - name: Run tests (Linux)
-      run: ./build/InfixToPostfixCalculator
+    # CMake ile proje yapılandırması
+    - name: Configure project (Linux)
       if: matrix.os == 'ubuntu-latest'
+      run: cmake -S . -B build -DCMAKE_INSTALL_PREFIX=publish_linux
 
-    - name: Run tests (Windows)
-      run: build\Debug\InfixToPostfixCalculator.exe
+    - name: Configure project (Windows)
       if: matrix.os == 'windows-latest'
+      run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_INSTALL_PREFIX=publish_windows
 
-    # Debug ve Release versiyonlarını kuruyoruz
-    - name: Install Debug and Release (Linux)
+    # Debug ve Release yapılandırma
+    - name: Build project (Debug, Linux)
+      if: matrix.os == 'ubuntu-latest'
+      run: cmake --build build --config Debug
+
+    - name: Build project (Debug, Windows)
+      if: matrix.os == 'windows-latest'
+      run: cmake --build build --config Debug
+
+    # Debug sürümünü install işlemi
+    - name: Install Debug (Linux)
       run: cmake --install build --config Debug --prefix publish_linux
       if: matrix.os == 'ubuntu-latest'
 
-    - name: Install Debug and Release (Windows)
+    - name: Install Debug (Windows)
       run: cmake --install build --config Debug --prefix publish_windows
       if: matrix.os == 'windows-latest'
 
-    # GitHub release oluşturma işlemi için INFIX_TOKEN kullanarak yükleme
+    # Çıktı dosyalarının listelenmesi (kontrol amacıyla)
+    - name: List output directory (Linux)
+      if: matrix.os == 'ubuntu-latest'
+      run: ls -la ./publish_linux/bin
+
+    - name: List output directory (Windows)
+      if: matrix.os == 'windows-latest'
+      run: dir .\publish_windows\bin
+
+    # Release oluşturma ve yükleme
     - name: Create GitHub Release
       id: create_release
       uses: actions/create-release@v1
       env:
-        GITHUB_TOKEN: ${{ secrets.INFIX_TOKEN }}  # INFIX_TOKEN burada kullanılıyor
+        GITHUB_TOKEN: ${{ secrets.INFIX_TOKEN }}
       with:
         tag_name: v1.0.${{ github.run_number }}
         release_name: "Release v1.0.${{ github.run_number }}"
